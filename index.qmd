@@ -5,7 +5,7 @@ format:
   html: default
 bibliography: references.bib
 execute:
-  echo: true
+  echo: false
   eval: true
 ---
 
@@ -27,9 +27,6 @@ Counterintuitively, the surgeon who does not "look the part" may actually be the
 
 ```{python}
 #| label: simulate-data
-#| echo: true
-#| message: false
-#| warning: false
 #| include: false
 
 import pandas as pd
@@ -59,20 +56,15 @@ patients_df = (
 patients_df[['patient', 'severity', 'doctor_id', 'doctor_name', 'post_surgical_score']].to_csv(
     'patients_data.csv', index=False
 )
-
-patients_df.head()
 ```
 
 ```{python}
 #| label: load-data-python
-#| echo: true
+#| include: false
 
 import pandas as pd
 
 patients_df = pd.read_csv('patients_data.csv')
-
-print(f"Number of patients: {len(patients_df)}")
-patients_df.head()
 ```
 
 The observational data initially appears to favor Doc Dreamy. Doc Duck's average post-surgical symptom score is 3.38 while Doc Dreamy's average is 2.80. Since lower scores indicate better outcomes, the naive conclusion would be that Doc Dreamy performs better. A two-sample t-test reinforces that impression with a statistically significant difference ($t = -2.317$, $p = 0.023$). @fig-plot-outcomes shows the full picture for all 100 patients.
@@ -80,9 +72,9 @@ The observational data initially appears to favor Doc Dreamy. Doc Duck's average
 ```{python}
 #| label: fig-plot-outcomes
 #| fig-cap: "Post-surgical symptom score (lower is better) in the observational data."
-#| echo: true
 
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 
 # ── Shared style constants ─────────────────────────────────────────────────────
 dreamy_color  = '#4E79A7'
@@ -133,11 +125,16 @@ ax.text(xmax - 2, duck_mean + 0.06,
 ax.set_title('Post-Surgical Symptom Score by Patient and Doctor', fontsize=14, fontweight='bold')
 ax.set_xlabel('Patient Number', fontsize=12)
 ax.set_ylabel('Post-Surgical Symptom Score (Lower is Better)', fontsize=12)
-ax.legend(title='Surgeon', frameon=True, fontsize=10)
 ax.grid(True, linestyle=':', alpha=0.5)
 
+# ── Legend (surgeons only) ─────────────────────────────────────────────────────
+legend_dreamy = mlines.Line2D([], [], color=dreamy_color, marker=dreamy_marker,
+                               linestyle='None', markersize=8, label='Doc Dreamy')
+legend_duck   = mlines.Line2D([], [], color=duck_color, marker=duck_marker,
+                               linestyle='None', markersize=8, label='Doc Duck')
+ax.legend(handles=[legend_dreamy, legend_duck], title='Surgeon', frameon=True, fontsize=10)
+
 fig.tight_layout()
-plt.show()
 ```
 
 At first glance, the figure seems persuasive: Doc Dreamy's patients cluster lower overall, and his mean line sits below Doc Duck's. But this visual comparison still leaves open a crucial causal question. Are we really seeing a treatment effect, or are we seeing differences in the types of patients each surgeon treats?
@@ -184,13 +181,10 @@ Because we cannot rerun history, we conduct a randomized experiment and observe 
 
 ```{python}
 #| label: simulate-data-randomized
-#| echo: true
-#| message: false
-#| warning: false
 #| include: false
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 np.random.seed(456)
 
@@ -215,20 +209,15 @@ patients_randomized_df = (
 patients_randomized_df[['patient', 'severity', 'doctor_id', 'doctor_name', 'post_surgical_score']].to_csv(
     'patients_data_randomized.csv', index=False
 )
-
-patients_randomized_df.head()
 ```
 
 ```{python}
 #| label: load-data-randomized-python
-#| echo: true
+#| include: false
 
 import pandas as pd
 
 patients_randomized_df = pd.read_csv('patients_data_randomized.csv')
-
-print(f"Number of randomized patients: {len(patients_randomized_df)}")
-patients_randomized_df.head()
 ```
 
 Under randomized assignment, the pattern reverses. Doc Duck's average post-surgical symptom score is 2.71 while Doc Dreamy's average is 3.46. Since lower scores indicate better outcomes, Doc Duck now appears superior. A two-sample t-test again finds a statistically significant difference ($t = 2.734$, $p = 0.007$). Once confounding is removed, the better-performing surgeon is no longer Doc Dreamy—it is Doc Duck. @fig-plot-outcomes-randomized shows this clearly.
@@ -236,9 +225,9 @@ Under randomized assignment, the pattern reverses. Doc Duck's average post-surgi
 ```{python}
 #| label: fig-plot-outcomes-randomized
 #| fig-cap: "Post-surgical symptom score (lower is better) under randomized assignment."
-#| echo: true
 
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 
 # ── Shared style constants ─────────────────────────────────────────────────────
 dreamy_color  = '#4E79A7'
@@ -289,11 +278,16 @@ ax.text(xmax_rand - 2, duck_rand_mean + 0.06,
 ax.set_title('Post-Surgical Symptom Score (Randomized Assignment)', fontsize=14, fontweight='bold')
 ax.set_xlabel('Patient Number', fontsize=12)
 ax.set_ylabel('Post-Surgical Symptom Score (Lower is Better)', fontsize=12)
-ax.legend(title='Surgeon', frameon=True, fontsize=10)
 ax.grid(True, linestyle=':', alpha=0.5)
 
+# ── Legend (surgeons only) ─────────────────────────────────────────────────────
+legend_dreamy = mlines.Line2D([], [], color=dreamy_color, marker=dreamy_marker,
+                               linestyle='None', markersize=8, label='Doc Dreamy')
+legend_duck   = mlines.Line2D([], [], color=duck_color, marker=duck_marker,
+                               linestyle='None', markersize=8, label='Doc Duck')
+ax.legend(handles=[legend_dreamy, legend_duck], title='Surgeon', frameon=True, fontsize=10)
+
 fig.tight_layout()
-plt.show()
 ```
 
 The randomized figure is powerful because it isolates the causal comparison. The same two doctors are now judged under a design where patient severity does not systematically determine assignment. Once that confounding path is removed, the true performance difference becomes visible.
@@ -307,9 +301,9 @@ Here, that means comparing Doc Dreamy and Doc Duck among patients with similar i
 ```{python}
 #| label: fig-plot-outcomes-severity
 #| fig-cap: "Post-surgical symptom score (lower is better) by patient severity in the observational data."
-#| echo: true
 
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 
 # ── Shared style constants ─────────────────────────────────────────────────────
 dreamy_color  = '#4E79A7'
@@ -330,9 +324,8 @@ duck_sev_mean   = duck_sev_df['post_surgical_score'].mean()
 # ── Figure / Axes ──────────────────────────────────────────────────────────────
 fig, ax = plt.subplots(figsize=(11, 6))
 
-# ── Shaded overlay (-1 to 1 severity) ─────────────────────────────────────────
-ax.axvspan(shade_lo, shade_hi, alpha=0.15, color='gray', zorder=0,
-           label='Overlap Region (severity −1 to 1)')
+# ── Shaded overlay (-1 to 1 severity) — no legend entry ───────────────────────
+ax.axvspan(shade_lo, shade_hi, alpha=0.15, color='gray', zorder=0)
 
 # ── Scatter points ─────────────────────────────────────────────────────────────
 ax.scatter(
@@ -367,11 +360,17 @@ ax.text(x_right - 0.05, duck_sev_mean + 0.06,
 ax.set_title('Post-Surgical Symptom Score by Patient Severity', fontsize=14, fontweight='bold')
 ax.set_xlabel('Initial Patient Severity', fontsize=12)
 ax.set_ylabel('Post-Surgical Symptom Score (Lower is Better)', fontsize=12)
-ax.legend(title='Surgeon', frameon=True, fontsize=10, loc='upper left')
 ax.grid(True, linestyle=':', alpha=0.5)
 
+# ── Legend (surgeons only, no shaded region) ───────────────────────────────────
+legend_dreamy = mlines.Line2D([], [], color=dreamy_color, marker=dreamy_marker,
+                               linestyle='None', markersize=8, label='Doc Dreamy')
+legend_duck   = mlines.Line2D([], [], color=duck_color, marker=duck_marker,
+                               linestyle='None', markersize=8, label='Doc Duck')
+ax.legend(handles=[legend_dreamy, legend_duck], title='Surgeon',
+          frameon=True, fontsize=10, loc='upper left')
+
 fig.tight_layout()
-plt.show()
 ```
 
 The value of stratification is most visible in the highlighted region between severity scores of -1 and 1. This range contains substantial overlap between the two surgeons, making it the most informative part of the figure for comparison. Outside that range, the assignment imbalance is stronger: Doc Duck sees more of the high-severity patients, while Doc Dreamy sees more of the low-severity patients.
